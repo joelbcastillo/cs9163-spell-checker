@@ -21,13 +21,9 @@ void initialize_hashtable(hashmap_t hashtable[])
 {
     for (int i = 0; i < HASH_SIZE; i++)
     {
-        hashtable[i] = malloc(sizeof(hashmap_t));
-        if (hashtable[i] == NULL)
-        {
-            break;
-        }
-        hashtable[i]->word[0] = '\0';
-        hashtable[i]->next = NULL;
+        hashmap_t cur_hash = malloc(sizeof(struct node));
+        cur_hash->next = NULL;
+        cur_hash->word[0] = '\0';
     }
 }
 
@@ -124,8 +120,6 @@ char *read_line(FILE* fp, size_t size) {
  **/
 bool load_dictionary(const char *dictionary_file, hashmap_t hashtable[])
 {
-    initialize_hashtable(hashtable);
-
     FILE *dictionary = open_file(dictionary_file);
 
     if (dictionary == NULL)
@@ -144,8 +138,9 @@ bool load_dictionary(const char *dictionary_file, hashmap_t hashtable[])
         // Set new_node next to NULL
         new_node->next = NULL;
         // Determine hash_value for current word
-        char *
-        int hash_bucket = hash_function((buffer));
+        char *word = NULL;
+        remove_punctuation_and_convert_case(word, buffer);
+        int hash_bucket = hash_function((word));
         // Store new_node in hashtable at value i
         if (hashtable[hash_bucket] == NULL)
         {
@@ -185,13 +180,13 @@ bool load_dictionary(const char *dictionary_file, hashmap_t hashtable[])
  **/
 bool check_word(const char* word, hashmap_t hashtable[]) {
     char *simplified_word = malloc(strlen(word)+1);
-    if(word_lower) {
-        remove_punctuation_and_convert_case(simplified_word, word)
+    if(simplified_word) {
+        remove_punctuation_and_convert_case(simplified_word, word);
     }
-    int bucket = hash_function(lower_case(word_lower));
+    int bucket = hash_function(simplified_word);
     hashmap_t cursor = hashtable[bucket];
     while (cursor != NULL) {
-        if (lower_case(word_lower) == cursor->word) {
+        if (simplified_word == cursor->word) {
             return true;
         }
         cursor = cursor->next;
