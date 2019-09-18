@@ -1,4 +1,6 @@
     #include <stdio.h>
+    #include <dictionary.h>
+    
     int main()
     {
        // printf() displays the string inside quotation

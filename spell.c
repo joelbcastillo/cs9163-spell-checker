@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <string.h>
 #include "dictionary.h"
 
 FILE *open_file(const char *filename)
@@ -28,7 +29,64 @@ void initialize_hashtable(hashmap_t hashtable[])
         hashtable[i]->next = NULL;
     }
 }
+/**
+ * Reads a line from a file of unknown length. Returns the string.
+ */
+/**
+ * Inputs: 
+ *  fp:         A file pointer to the document to check for spelling errors.
+ *  size:       The initialize size of the string to allocate in memory.
+ * 
+ * Returns:
+ *  char *:     The line as a pointer to a character string.
+ * 
+ * Example:
+ *  char *line = read_line(fp, 1024)
+ **/
+char *read_line(FILE* fp, size_t size) {
+    char *str;
 
+    int cur_char;
+
+    size_t len = 0;
+
+    str = realloc(NULL, sizeof(char)*size);
+
+    if (!str) {
+        return str;
+    }
+
+    while (EOF != (cur_char=fgetc(fp)) && cur_char != '\n') {
+        str[len++]=cur_char;
+        if(len == size) {
+            str = realloc(str, sizeof(char)*(size += 16));
+            if (!str) {
+                return str;
+            }
+        }
+    }
+    str[len++] = '\0';
+
+    return realloc(str, sizeof(char)*len);
+}
+
+/**
+ * Loads dictionary into memory.  Returns true if successful else false.
+ */
+/**
+ * Inputs:
+ *  dictionary_file:    Path to the words file.
+ *  hashtable:          The hash table to be populated.
+ *            
+ * Returns:
+ *  bool:       Whether or not the hashmap successfully populated.
+ *
+ * Modifies:
+ *  hashtable: This hashmap should be filled with words from the file provided.
+ *
+ * Example:
+ *  bool success = load_dictionary("wordlist.txt", hashtable);
+ **/
 bool load_dictionary(const char *dictionary_file, hashmap_t hashtable[])
 {
     initialize_hashtable(hashtable);
@@ -71,4 +129,85 @@ bool load_dictionary(const char *dictionary_file, hashmap_t hashtable[])
     else {
         return false;
     }
+}
+
+/**
+ * Returns true if word is in dictionary else false.
+ */
+/**
+ * Inputs:
+ *  word:       A word to check the spelling of.
+ *  hashtable:  The hash table used to determine spelling
+ *            
+ * Returns:
+ *  bool:       A boolean value indicating if the word was correctly spelled.
+ *
+ * Modifies:
+ *  
+ * Example:
+ *  bool correct  = check_word(word, hashtable);
+ **/
+bool check_word(const char* word, hashmap_t hashtable[]) {
+    int bucket = hash_function(word);
+
+    hashmap_t cursor = hashtable[bucket];
+
+    while (cursor != NULL) {
+        if (word == cursor->word) {
+            return true;
+        }
+        cursor = cursor->next;
+    }
+
+    int bucket = hash_function(lower_case(word));
+    hashmap_t cursor = hashtable[bucket];
+    while (cursor != NULL) {
+        if (lower_case(word) == cursor->word) {
+            return true;
+        }
+        cursor = cursor->next;
+    }
+    return false;
+}
+
+
+/**
+ * Array misspelled is populated with words that are misspelled. Returns the length of misspelled.
+ */
+/**
+ * Inputs:
+ *  fp:         A file pointer to the document to check for spelling errors.
+ *  hashtable:  The hash table used to determine spelling
+ *  misspelled: An empty char* array to be populated with misspelled words.
+ *              This array will never be greater than 1000 words long.
+ *            
+ * Returns:
+ *  int:        The number of words in the misspelled arary.
+ *
+ * Modifies:
+ *  misspelled: This array will be filled with misspelled words.
+ *
+ * Example:
+ *  int num_misspelled = check_words(text_file, hashtable, misspelled);
+ **/
+int check_words(FILE* fp, hashmap_t hashtable[], char * misspelled[]) {
+    int num_misspelled = 0;
+
+    char *line;
+    
+    while (line != NULL) {
+        line = read_line(fp, BUFSIZ);
+        char *word = strtok(line, " \t");
+        while (word != NULL) {
+            if (!check_word(word, hashtable)) {
+                num_misspelled++;
+                misspelled[num_misspelled] = word;
+                if (num_misspelled > MAX_MISSPELLED) {
+                    return num_misspelled;
+                }
+            }
+            word = strtok(NULL, " \t");
+        }
+    }
+    return num_misspelled;
 }
