@@ -29,7 +29,7 @@ test-valgrind: dictionary.o spell.o test_main.o
 	gcc -Wall -g -o test_main test_main.o spell.o dictionary.o -lcheck -lm -lrt -lpthread -lsubunit
 	valgrind --leak-check=full ./test_main
 
-prog: cleanall dictionary.o spell.o main.o
+prog: dictionary.o spell.o main.o
 	gcc -Wall -g -o spell_check dictionary.o spell.o main.o
 
 clean:

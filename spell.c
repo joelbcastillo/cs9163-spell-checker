@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <ctype.h>
 #include "dictionary.h"
 
 FILE *open_file(const char *filename)
@@ -29,9 +30,43 @@ void initialize_hashtable(hashmap_t hashtable[])
         hashtable[i]->next = NULL;
     }
 }
+
+/**
+ * Converts a string to lowercase
+ **/
+/**
+ * Inputs:
+ *   str:       A string of characters.
+ * 
+ * Example:
+ *   lower_case(str);
+ **/
+void remove_punctuation_and_convert_case(char * dest, const char * src) {
+    char * src_char = malloc(strlen(src) + 1);
+
+    if (src_char) {
+        strcpy(src_char, src);
+    }
+
+    while (*src_char) {
+        if (ispunct((unsigned char)*src_char)) {
+            src_char++;
+        } else if (isupper((unsigned char)*src_char)) {
+            *dest++ = tolower((unsigned char)*src_char);
+            src_char++;
+        } else if (src_char == dest) {
+            src_char++;
+            dest++;
+        } else {
+            *dest++ = *src_char++;
+        }
+    }
+    *dest = '\0';
+}
+
 /**
  * Reads a line from a file of unknown length. Returns the string.
- */
+ **/
 /**
  * Inputs: 
  *  fp:         A file pointer to the document to check for spelling errors.
@@ -109,7 +144,8 @@ bool load_dictionary(const char *dictionary_file, hashmap_t hashtable[])
         // Set new_node next to NULL
         new_node->next = NULL;
         // Determine hash_value for current word
-        int hash_bucket = hash_function(buffer);
+        char *
+        int hash_bucket = hash_function((buffer));
         // Store new_node in hashtable at value i
         if (hashtable[hash_bucket] == NULL)
         {
@@ -148,21 +184,14 @@ bool load_dictionary(const char *dictionary_file, hashmap_t hashtable[])
  *  bool correct  = check_word(word, hashtable);
  **/
 bool check_word(const char* word, hashmap_t hashtable[]) {
-    int bucket = hash_function(word);
-
-    hashmap_t cursor = hashtable[bucket];
-
-    while (cursor != NULL) {
-        if (word == cursor->word) {
-            return true;
-        }
-        cursor = cursor->next;
+    char *simplified_word = malloc(strlen(word)+1);
+    if(word_lower) {
+        remove_punctuation_and_convert_case(simplified_word, word)
     }
-
-    int bucket = hash_function(lower_case(word));
+    int bucket = hash_function(lower_case(word_lower));
     hashmap_t cursor = hashtable[bucket];
     while (cursor != NULL) {
-        if (lower_case(word) == cursor->word) {
+        if (lower_case(word_lower) == cursor->word) {
             return true;
         }
         cursor = cursor->next;
@@ -193,7 +222,7 @@ bool check_word(const char* word, hashmap_t hashtable[]) {
 int check_words(FILE* fp, hashmap_t hashtable[], char * misspelled[]) {
     int num_misspelled = 0;
 
-    char *line;
+    char *line = read_line(fp, BUFSIZ);
     
     while (line != NULL) {
         line = read_line(fp, BUFSIZ);
