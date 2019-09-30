@@ -33,7 +33,7 @@ prog: dictionary.o spell.o main.o
 	gcc -Wall -g -o spell_check dictionary.o spell.o main.o
 
 clean:
-	rm dictionary.o spell.o main.o test_main.o check_spell.o
+	-rm dictionary.o spell.o main.o test_main.o check_spell.o dictionary.h.gch
 
 cleanall:clean
-	rm spell_check
+	-rm spell_check

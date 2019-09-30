@@ -5,60 +5,6 @@
 #include <ctype.h>
 #include "dictionary.h"
 
-FILE *open_file(const char *filename)
-{
-    FILE *fptr;
-
-    if ((fptr = fopen(filename, "r")) == NULL)
-    {
-        return NULL;
-    }
-
-    return fptr;
-}
-
-void initialize_hashtable(hashmap_t hashtable[])
-{
-    for (int i = 0; i < HASH_SIZE; i++)
-    {
-        hashmap_t cur_hash = malloc(sizeof(struct node));
-        cur_hash->next = NULL;
-        cur_hash->word[0] = '\0';
-    }
-}
-
-/**
- * Converts a string to lowercase
- **/
-/**
- * Inputs:
- *   str:       A string of characters.
- * 
- * Example:
- *   lower_case(str);
- **/
-void remove_punctuation_and_convert_case(char * dest, const char * src) {
-    char * src_char = malloc(strlen(src) + 1);
-
-    if (src_char) {
-        strcpy(src_char, src);
-    }
-
-    while (*src_char) {
-        if (ispunct((unsigned char)*src_char)) {
-            src_char++;
-        } else if (isupper((unsigned char)*src_char)) {
-            *dest++ = tolower((unsigned char)*src_char);
-            src_char++;
-        } else if (src_char == dest) {
-            src_char++;
-            dest++;
-        } else {
-            *dest++ = *src_char++;
-        }
-    }
-    *dest = '\0';
-}
 
 /**
  * Reads a line from a file of unknown length. Returns the string.
@@ -74,31 +20,78 @@ void remove_punctuation_and_convert_case(char * dest, const char * src) {
  * Example:
  *  char *line = read_line(fp, 1024)
  **/
-char *read_line(FILE* fp, size_t size) {
+char *read_line(FILE *fp, size_t size)
+{
     char *str;
 
     int cur_char;
 
     size_t len = 0;
 
-    str = realloc(NULL, sizeof(char)*size);
+    str = realloc(NULL, sizeof(char) * size);
 
-    if (!str) {
+    if (!str)
+    {
         return str;
     }
 
-    while (EOF != (cur_char=fgetc(fp)) && cur_char != '\n') {
-        str[len++]=cur_char;
-        if(len == size) {
-            str = realloc(str, sizeof(char)*(size += 16));
-            if (!str) {
+    while (EOF != (cur_char = fgetc(fp)) && cur_char != '\n')
+    {
+        str[len++] = cur_char;
+        if (len == size)
+        {
+            str = realloc(str, sizeof(char) * (size += 16));
+            if (!str)
+            {
                 return str;
             }
         }
     }
     str[len++] = '\0';
 
-    return realloc(str, sizeof(char)*len);
+    return realloc(str, sizeof(char) * len);
+}
+
+/**
+ * Removes punctuation characters from the provided string. Returns the modified string.
+ */
+/**
+ * Inputs:
+ *   word:      String to modify
+ * 
+ * Returns:
+ *   char *:    Modified string (without punctuation)
+ * 
+ * Example:
+ *  char * new_word = remove_punctuation("he.llo!");
+ **/
+
+char *remove_punctuation_and_uppercase_characters(const char *word)
+{
+    char *fixed_word = malloc(49);
+
+    int i = 0;
+
+    while (word[i] != '\0')
+    {
+        if (ispunct(word[i]))
+        {
+            i++;
+            continue;
+        }
+        else if (isupper(word[i]))
+        {
+            fixed_word[i] = tolower(word[i]);
+            i++;
+            continue;
+        }
+        else
+        {
+            fixed_word[i] = word[i];
+            i++;
+        }
+    }
+    return fixed_word;
 }
 
 /**
@@ -120,28 +113,36 @@ char *read_line(FILE* fp, size_t size) {
  **/
 bool load_dictionary(const char *dictionary_file, hashmap_t hashtable[])
 {
-    FILE *dictionary = open_file(dictionary_file);
+    FILE *dictionary = fopen(dictionary_file, "r");
 
     if (dictionary == NULL)
     {
+        printf("Unable to load dictionary: %s", dictionary_file);
         return false;
     }
 
-    char buffer[LENGTH+1];
+    char temp_word[LENGTH + 1] = {'\0'};
 
-    while (fgets(buffer, sizeof(buffer), dictionary) != NULL)
+    int num_words = 0;
+
+    while (fscanf(dictionary, "%s", temp_word) == 1)
     {
+        num_words++;
         // Create new empty node to store current dictionary word
-        hashmap_t new_node = malloc(sizeof(hashmap_t));
-        // Set new_node word = to the current word
-        new_node->word[0]= *buffer;
+        hashmap_t new_node = malloc(sizeof(node));
+
         // Set new_node next to NULL
         new_node->next = NULL;
-        // Determine hash_value for current word
-        char *word = NULL;
-        remove_punctuation_and_convert_case(word, buffer);
-        int hash_bucket = hash_function((word));
-        // Store new_node in hashtable at value i
+
+        char * word_to_store = remove_punctuation_and_uppercase_characters(temp_word);
+
+        // Save current word in new_node->word
+        strncpy(new_node->word, word_to_store, strlen(word_to_store));
+
+        // Determine hash value for word
+        int hash_bucket = hash_function(word_to_store);
+
+        // Store new node in hashtable in hash_bucket
         if (hashtable[hash_bucket] == NULL)
         {
             hashtable[hash_bucket] = new_node;
@@ -152,14 +153,8 @@ bool load_dictionary(const char *dictionary_file, hashmap_t hashtable[])
             hashtable[hash_bucket] = new_node;
         }
     }
-    if (feof(dictionary))
-    {
-        fclose(dictionary);
-        return true;
-    }
-    else {
-        return false;
-    }
+    fclose(dictionary);
+    return true;
 }
 
 /**
@@ -178,22 +173,24 @@ bool load_dictionary(const char *dictionary_file, hashmap_t hashtable[])
  * Example:
  *  bool correct  = check_word(word, hashtable);
  **/
-bool check_word(const char* word, hashmap_t hashtable[]) {
-    char *simplified_word = malloc(strlen(word)+1);
-    if(simplified_word) {
-        remove_punctuation_and_convert_case(simplified_word, word);
-    }
-    int bucket = hash_function(simplified_word);
-    hashmap_t cursor = hashtable[bucket];
+bool check_word(const char *word, hashmap_t hashtable[])
+{
+    char * basic_word = remove_punctuation_and_uppercase_characters(word);
+
+    int bucket = hash_function(basic_word);
+
+    node * cursor = hashtable[bucket];
+
     while (cursor != NULL) {
-        if (simplified_word == cursor->word) {
+        if (strcmp(basic_word, cursor->word) == 0) {
             return true;
+        } else {
+            cursor = cursor -> next;
         }
-        cursor = cursor->next;
     }
+
     return false;
 }
-
 
 /**
  * Array misspelled is populated with words that are misspelled. Returns the length of misspelled.
@@ -214,19 +211,25 @@ bool check_word(const char* word, hashmap_t hashtable[]) {
  * Example:
  *  int num_misspelled = check_words(text_file, hashtable, misspelled);
  **/
-int check_words(FILE* fp, hashmap_t hashtable[], char * misspelled[]) {
+int check_words(FILE *fp, hashmap_t hashtable[], char *misspelled[])
+{
     int num_misspelled = 0;
+    char *line = NULL;
+    size_t line_len = 0;
 
-    char *line = read_line(fp, BUFSIZ);
-    
-    while (line != NULL) {
-        line = read_line(fp, BUFSIZ);
+    while (getline(&line, &line_len, fp))
+    {
         char *word = strtok(line, " \t");
-        while (word != NULL) {
-            if (!check_word(word, hashtable)) {
+        while (word != NULL)
+        {
+            if (!check_word(word, hashtable))
+            {
+                char *misspelled_word = malloc(strlen(word) * sizeof(char));
+                strncpy(misspelled_word, word, strlen(word));
+                misspelled[num_misspelled] = misspelled_word;
                 num_misspelled++;
-                misspelled[num_misspelled] = word;
-                if (num_misspelled > MAX_MISSPELLED) {
+                if (num_misspelled > MAX_MISSPELLED)
+                {
                     return num_misspelled;
                 }
             }
