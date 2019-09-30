@@ -9,8 +9,8 @@ jobs:
     
     steps:
     - uses: actions/checkout@v1
-    - name: configure
-      run: ./configure
+    - name: make get-deps-apt
+      run: make get-deps-apt
     - name: make
       run: make
     - name: make check
