@@ -28,6 +28,7 @@ int main(int argc, char *argv[])
 
    if (check_fp == NULL) {
       printf("Unable to open filename.\n");
+      return 1;
    }
    char *mispelled_words[MAX_MISSPELLED];
    int incorrect_words_cnt = check_words(check_fp, dictionary, mispelled_words);

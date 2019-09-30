@@ -68,7 +68,7 @@ char *read_line(FILE *fp, size_t size)
 
 char *remove_punctuation_and_uppercase_characters(const char *word)
 {
-    char *fixed_word = malloc(49);
+    char *fixed_word = malloc(sizeof(char) * LENGTH+1);
 
     int i = 0;
 
@@ -117,7 +117,7 @@ bool load_dictionary(const char *dictionary_file, hashmap_t hashtable[])
 
     if (dictionary == NULL)
     {
-        printf("Unable to load dictionary: %s", dictionary_file);
+        printf("Unable to load dictionary: %s\n", dictionary_file);
         return false;
     }
 
@@ -133,8 +133,9 @@ bool load_dictionary(const char *dictionary_file, hashmap_t hashtable[])
 
         // Set new_node next to NULL
         new_node->next = NULL;
-
-        char * word_to_store = remove_punctuation_and_uppercase_characters(temp_word);
+        char * word_to_store = NULL;
+        
+        word_to_store = remove_punctuation_and_uppercase_characters(temp_word);
 
         // Save current word in new_node->word
         strncpy(new_node->word, word_to_store, strlen(word_to_store));
@@ -178,10 +179,12 @@ bool check_word(const char *word, hashmap_t hashtable[])
     char * basic_word = remove_punctuation_and_uppercase_characters(word);
 
     int bucket = hash_function(basic_word);
+    printf("Bucket: %i\n", bucket);
 
-    node * cursor = hashtable[bucket];
+    node* cursor = hashtable[bucket];
 
     while (cursor != NULL) {
+        printf("%s: %s\n", basic_word, cursor->word);
         if (strcmp(basic_word, cursor->word) == 0) {
             return true;
         } else {
@@ -217,11 +220,12 @@ int check_words(FILE *fp, hashmap_t hashtable[], char *misspelled[])
     char *line = NULL;
     size_t line_len = 0;
 
-    while (getline(&line, &line_len, fp))
+    while (getline(&line, &line_len, fp) != -1)
     {
-        char *word = strtok(line, " \t");
+        char *word = strtok(line, " \t\n");
         while (word != NULL)
         {
+            printf("strlen(%s): %zu\n", word, strlen(word));
             if (!check_word(word, hashtable))
             {
                 char *misspelled_word = malloc(strlen(word) * sizeof(char));
@@ -233,7 +237,7 @@ int check_words(FILE *fp, hashmap_t hashtable[], char *misspelled[])
                     return num_misspelled;
                 }
             }
-            word = strtok(NULL, " \t");
+            word = strtok(NULL, " \t\n");
         }
     }
     return num_misspelled;
