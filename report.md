@@ -1,6 +1,6 @@
 # Assignment 1
 
-Student: Joel Castillo (jc5383)
+Student: Joel Castillo (jc5383)  
 Repo: https://github.com/joelbcastillo/cs9163-spell-checker
 
 ## Application Functionality
@@ -146,9 +146,8 @@ In addition, I was unable to get the code to pass the gradescope tests. I ran ou
 I added an additional test to see how the function for `remove_punctuation_and_uppercase_characters` would work. Unfortunately, I was unable to get this function working properly in the test cases most likely due to multiple imports from importing spell.c.
 
 ## Fuzzing
-Fuzzing failed spectacularly:
-
-
+Fuzzing failed spectacularly:  
+```
                      american fuzzy lop 2.52b (spell_check)
 
 ┌─ process timing ─────────────────────────────────────┬─ overall results ─────┐
@@ -175,7 +174,7 @@ Fuzzing failed spectacularly:
 └─────────────────────────────────────────────────────┘             [cpu: 43%]
 [-] PROGRAM ABORT : Unable to execute target application
          Location : save_if_interesting(), afl-fuzz.c:3281
-
+```
 
 I believe most of these errors are caused by either:
     - Incorrect usage of memory (unlikely due to the valgrind output).
